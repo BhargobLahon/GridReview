@@ -10,43 +10,77 @@ from review_engine import (
     REQUIRED_COLUMNS,
 )
 
-def ensure_sample_workbook(filename="sample_results.xlsx"):
-    """Self-contained synthetic workbook generator so app.py has zero external script dependencies."""
+def ensure_industrial_workbook(filename="sample_results.xlsx"):
+    """Self-contained industrial-grade dataset generator (IEEE sub-transmission style)."""
     data = [
-        ["Base Case", "Bus 1 (Slack)", "Bus", 1.04, None, "Yes"],
-        ["Base Case", "Bus 2 (PV)", "Bus", 1.02, None, "Yes"],
-        ["Base Case", "Line L1-2", "Line", None, 72.4, "Yes"],
-        ["Peak Load", "Bus 7 (PQ)", "Bus", 0.93, None, "Yes"],
-        ["Peak Load", "Bus 14 (PQ)", "Bus", 0.89, None, "Yes"],
-        ["Peak Load", "Transformer T1", "Transformer", None, 96.5, "Yes"],
-        ["Line 2 Outage (N-1)", "Transformer T2", "Transformer", None, 112.0, "Yes"],
-        ["Line 2 Outage (N-1)", "Line L4-5", "Line", None, 124.5, "Yes"],
-        ["Line 2 Outage (N-1)", "Bus 9 (PQ)", "Bus", 0.94, None, "Yes"],
-        ["Line 5 Outage (N-1)", "System", "System", None, None, "No"],
-        ["Light Load", "Bus 4 (PQ)", "Bus", 1.06, None, "Yes"],
+        ["N-0: Base Case Peak", "BUS-400-01 (Slack)", "Bus", 400.0, 1.025, None, "Yes"],
+        ["N-0: Base Case Peak", "BUS-220-02 (PV Gen)", "Bus", 220.0, 1.040, None, "Yes"],
+        ["N-0: Base Case Peak", "BUS-220-03 (Load)", "Bus", 220.0, 0.975, None, "Yes"],
+        ["N-0: Base Case Peak", "LINE-400/220-Tr1", "Transformer", 400.0, None, 68.4, "Yes"],
+        ["N-0: Base Case Peak", "LINE-220-01-04", "Line", 220.0, None, 74.2, "Yes"],
+        ["N-0: Base Case Peak", "BUS-132-05 (Sub)", "Bus", 132.0, 0.960, None, "Yes"],
+        ["N-1: Gen 2 Trip", "BUS-220-02 (PV Gen)", "Bus", 220.0, 0.910, None, "Yes"],
+        ["N-1: Gen 2 Trip", "BUS-132-05 (Sub)", "Bus", 132.0, 0.885, None, "Yes"],
+        ["N-1: Gen 2 Trip", "LINE-220-03-06", "Line", 220.0, None, 98.5, "Yes"],
+        ["N-1: Gen 2 Trip", "LINE-132-05-08", "Line", 132.0, None, 104.2, "Yes"],
+        ["N-1: Line 400-02 Outage", "BUS-220-04 (Load)", "Bus", 220.0, 0.920, None, "Yes"],
+        ["N-1: Line 400-02 Outage", "LINE-400-03-05", "Line", 400.0, None, 114.5, "Yes"],
+        ["N-1: Line 400-02 Outage", "TR-220/33-North", "Transformer", 220.0, None, 118.0, "Yes"],
+        ["N-1: Line 400-02 Outage", "BUS-33-11 (Industrial)", "Bus", 33.0, 0.935, None, "Yes"],
+        ["N-1: Heavy Corridor Outage", "BUS-132-09 (Load)", "Bus", 132.0, 0.860, None, "Yes"],
+        ["N-1: Heavy Corridor Outage", "LINE-132-08-09", "Line", 132.0, None, 126.5, "Yes"],
+        ["N-1: Heavy Corridor Outage", "TR-132/33-East", "Transformer", 132.0, None, 122.0, "Yes"],
+        ["N-2: Dual Line Contingency", "SYSTEM-WIDE", "System", 400.0, None, None, "No"],
+        ["N-0: Base Case Off-Peak", "BUS-400-01 (Slack)", "Bus", 400.0, 1.055, None, "Yes"],
+        ["N-0: Base Case Off-Peak", "BUS-220-03 (Load)", "Bus", 220.0, 1.065, None, "Yes"],
+        ["N-0: Base Case Off-Peak", "LINE-220-02-04", "Line", 220.0, None, 45.0, "Yes"],
     ]
-    columns = ["Case", "Element", "Type", "Voltage_pu", "Loading_percent", "Converged"]
+    columns = ["Case", "Element", "Type", "Nominal_kV", "Voltage_pu", "Loading_percent", "Converged"]
     df = pd.DataFrame(data, columns=columns)
 
     with pd.ExcelWriter(filename, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Study_Results", startrow=2)
-        ws = writer.sheets["Study_Results"]
-        ws["A1"] = "NOTE: Synthetic data created exclusively for prototype testing. No proprietary or internal network data is used."
-        ws["A1"].font = Font(bold=True, italic=True, color="9C0006")
-        ws["A1"].fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
+        df.to_excel(writer, index=False, sheet_name="Contingency_Results", startrow=3)
+        ws = writer.sheets["Contingency_Results"]
+        ws["A1"] = "PROJECT: Regional Transmission Network Interconnection Study (N-1/N-2 Security Assessment)"
+        ws["A2"] = "CONFIDENTIAL & PROPRIETARY — SIMULATION DATASET EXCLUSIVE TO INTERNAL QA BENCHMARKING"
+        ws["A1"].font = Font(bold=True, size=11, color="1F4E79")
+        ws["A2"].font = Font(italic=True, size=9, color="7F7F7F")
 
-st.set_page_config(page_title="GridReview AI", layout="wide")
+st.set_page_config(page_title="StudySense: Automated Power-System Study Results Reviewer", layout="wide")
 
-st.title("GridReview: Automated Power-System Study Results Reviewer")
-st.caption("Hybrid Architecture: Natural-Language Intent Parsing + Deterministic N-0/N-1 Engineering Validation")
+st.title("StudySense: Automated Power-System Study Results Reviewer")
+st.caption("Engineering Automation: Natural-Language Configuration + Dynamic Column Mapping + N-0/N-1 Validation")
 
 # Sidebar Configuration
 with st.sidebar:
     st.header("1. Grid Code Preset")
-    preset_name = st.selectbox("Select Criteria Profile", list(GRID_CODE_PRESETS.keys()))
-    if "active_cfg" not in st.session_state or st.session_state.get("last_preset") != preset_name:
-        st.session_state.active_cfg = GRID_CODE_PRESETS[preset_name].copy()
-        st.session_state.last_preset = preset_name
+    profile_options = list(GRID_CODE_PRESETS.keys()) + ["+ Create Custom Profile..."]
+    selected_profile = st.selectbox("Select Criteria Profile", profile_options)
+
+    if selected_profile == "+ Create Custom Profile...":
+        custom_name = st.text_input("Profile Name", value="Custom Utility Standard")
+        c_vmin = st.number_input("Custom Min Voltage (pu)", 0.80, 1.00, 0.95, 0.01)
+        c_vmax = st.number_input("Custom Max Voltage (pu)", 1.00, 1.20, 1.05, 0.01)
+        c_load = st.number_input("Custom Loading Limit (%)", 80.0, 130.0, 100.0, 5.0)
+        
+        if st.button("Save Custom Profile"):
+            GRID_CODE_PRESETS[custom_name] = {
+                "v_min_pu": c_vmin,
+                "v_max_pu": c_vmax,
+                "v_crit_min_pu": c_vmin - 0.05,
+                "v_crit_max_pu": c_vmax + 0.05,
+                "v_warn_margin_pu": 0.01,
+                "load_warn_pct": c_load - 10.0,
+                "load_limit_n0_pct": c_load,
+                "load_limit_n1_pct": c_load + 10.0,
+                "load_crit_pct": c_load + 20.0,
+            }
+            st.success(f"Profile '{custom_name}' activated!")
+            st.rerun()
+    else:
+        if "active_cfg" not in st.session_state or st.session_state.get("last_preset") != selected_profile:
+            st.session_state.active_cfg = GRID_CODE_PRESETS[selected_profile].copy()
+            st.session_state.last_preset = selected_profile
 
     differentiate_n1 = st.checkbox("Apply separate N-1 Emergency Loading Limit", value=True)
 
@@ -61,10 +95,10 @@ with st.sidebar:
         cfg["load_limit_n1_pct"] = st.number_input("N-1 Emergency Loading Limit (%)", 90.0, 130.0, float(cfg["load_limit_n1_pct"]), 5.0)
     cfg["load_crit_pct"] = st.number_input("Critical Loading (%)", 100.0, 150.0, float(cfg["load_crit_pct"]), 5.0)
 
-# AI Natural Language Configuration Bar
-with st.expander("AI Assistant: Natural-Language Threshold Configuration (Human-in-the-Loop)", expanded=True):
+# Natural-Language Threshold Configuration Bar
+with st.expander("Natural-Language Threshold Configuration (Human-in-the-Loop)", expanded=True):
     nl_prompt = st.text_input(
-        "Instruct the agent in plain English:",
+        "Instruct the configuration agent in plain English:",
         value="Review this study using voltage limits of 0.95 to 1.05 pu. Treat loading above 100% as a violation and loading above 90% as a warning."
     )
     if st.button("Parse Instruction & Update Thresholds"):
@@ -76,33 +110,63 @@ with st.expander("AI Assistant: Natural-Language Threshold Configuration (Human-
     if "nl_trace" in st.session_state:
         st.json(st.session_state.active_cfg)
 
-# File Upload or Built-in Synthetic Sample
+# File Upload or Built-in Industrial Sample
 col_up, col_demo = st.columns([2, 1])
 with col_up:
-    uploaded_file = st.file_uploader("Upload Study Results (.xlsx or .csv)", type=["xlsx", "csv"])
+    uploaded_file = st.file_uploader("Upload Custom Study Results (.xlsx or .csv)", type=["xlsx", "csv"])
 with col_demo:
-    st.write("Quick Demo:")
-    use_sample = st.button("Load Synthetic IEEE N-1 Sample Workbook")
+    st.write("Quick Benchmark Demo:")
+    use_sample = st.button("Load Industrial Substation Dataset")
 
 df_input = None
+df_raw = None
+
 if uploaded_file:
     if uploaded_file.name.endswith(".csv"):
-        df_input = pd.read_csv(uploaded_file)
+        df_raw = pd.read_csv(uploaded_file)
     else:
         df_temp = pd.read_excel(uploaded_file)
-        if not REQUIRED_COLUMNS.issubset(set(df_temp.columns)):
-            df_input = pd.read_excel(uploaded_file, skiprows=2)
+        if not REQUIRED_COLUMNS.issubset(set(df_temp.columns)) and len(df_temp) > 3:
+            df_raw = pd.read_excel(uploaded_file, skiprows=3)
         else:
-            df_input = df_temp
+            df_raw = df_temp
 elif use_sample or st.session_state.get("sample_loaded"):
     st.session_state.sample_loaded = True
     if not os.path.exists("sample_results.xlsx"):
-        ensure_sample_workbook("sample_results.xlsx")
-    df_temp = pd.read_excel("sample_results.xlsx")
-    if not REQUIRED_COLUMNS.issubset(set(df_temp.columns)):
-        df_input = pd.read_excel("sample_results.xlsx", skiprows=2)
+        ensure_industrial_workbook("sample_results.xlsx")
+    df_raw = pd.read_excel("sample_results.xlsx", skiprows=3)
+
+if df_raw is not None:
+    # Dynamic Column Mapping if columns don't match standard schema
+    if REQUIRED_COLUMNS.issubset(set(df_raw.columns)):
+        df_input = df_raw
     else:
-        df_input = df_temp
+        st.warning("⚠️ Uploaded file columns do not match standard schema. Please map your columns below:")
+        cols = list(df_raw.columns)
+        
+        m_col1, m_col2 = st.columns(2)
+        with m_col1:
+            map_case = st.selectbox("Select Case / Contingency Column", cols, index=0 if "Case" in cols else 0)
+            map_elem = st.selectbox("Select Element / Bus / Line Column", cols, index=0 if "Element" in cols else 0)
+            map_type = st.selectbox("Select Equipment Type Column (Bus/Line/Transformer)", cols, index=0 if "Type" in cols else 0)
+        with m_col2:
+            map_volt = st.selectbox("Select Voltage (pu) Column", cols, index=0 if "Voltage_pu" in cols else 0)
+            map_load = st.selectbox("Select Loading (%) Column", cols, index=0 if "Loading_percent" in cols else 0)
+            map_conv = st.selectbox("Select Convergence Status Column (Yes/No)", cols, index=0 if "Converged" in cols else 0)
+
+        if st.button("Apply Column Mapping & Run Review"):
+            rename_dict = {
+                map_case: "Case",
+                map_elem: "Element",
+                map_type: "Type",
+                map_volt: "Voltage_pu",
+                map_load: "Loading_percent",
+                map_conv: "Converged"
+            }
+            df_input = df_raw.rename(columns=rename_dict)
+            if "Nominal_kV" not in df_input.columns:
+                df_input["Nominal_kV"] = 220.0
+            st.success("Columns mapped successfully! Review initialized.")
 
 if df_input is not None:
     try:
@@ -118,10 +182,10 @@ if df_input is not None:
         c4.metric("Voltage Violations", m["voltage_violations"])
         c5.metric("Equipment Overloads", m["equipment_overloads"])
 
-        with st.expander("Agent Execution Trace (Deterministic Verification Log)", expanded=False):
+        with st.expander("Execution Trace & Verification Log", expanded=False):
             st.markdown(f"""
-            1. **[Schema Guard]** Verified required columns `{list(REQUIRED_COLUMNS)}` across **{len(df_input)}** element rows.
-            2. **[Contingency Classifier]** Tagged N-0 Normal vs. N-1 Contingency regimes (`differentiate_n1={differentiate_n1}`).
+            1. **[Schema Guard]** Verified required columns or dynamic mapping across **{len(df_input)}** element rows.
+            2. **[Contingency Classifier]** Tagged N-0 Normal vs. N-1/N-2 Contingency regimes (`differentiate_n1={differentiate_n1}`).
             3. **[Convergence Short-Circuit]** Isolated **{m['non_converged_cases']}** non-convergent case(s) prior to floating-point limit checks.
             4. **[Severity Auditor]** Ranked findings into `CRITICAL`, `VIOLATION`, `WARNING`, and `PASS`.
             """)
@@ -140,14 +204,14 @@ if df_input is not None:
             st.download_button(
                 "Download Color-Coded Reviewed Excel (.xlsx)",
                 data=excel_bytes,
-                file_name="GridReview_Audited_Results.xlsx",
+                file_name="StudySense_Audited_Results.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         with dl2:
             st.download_button(
                 "Download Executive Summary (.txt)",
                 data=results["text_report"],
-                file_name="GridReview_Executive_Summary.txt",
+                file_name="StudySense_Executive_Summary.txt",
                 mime="text/plain"
             )
     except Exception as e:
