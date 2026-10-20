@@ -37,7 +37,7 @@ def ensure_sample_workbook(filename="sample_results.xlsx"):
 
 st.set_page_config(page_title="GridReview AI", layout="wide")
 
-st.title("StudySense: Automated Power-System Study Results Reviewer")
+st.title("GridReview: Automated Power-System Study Results Reviewer")
 st.caption("Hybrid Architecture: Natural-Language Intent Parsing + Deterministic N-0/N-1 Engineering Validation")
 
 # Sidebar Configuration
