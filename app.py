@@ -125,11 +125,26 @@ if uploaded_file:
     if uploaded_file.name.endswith(".csv"):
         df_raw = pd.read_csv(uploaded_file)
     else:
+        # Read the file normally first
         df_temp = pd.read_excel(uploaded_file)
-        if not REQUIRED_COLUMNS.issubset(set(df_temp.columns)) and len(df_temp) > 3:
-            df_raw = pd.read_excel(uploaded_file, skiprows=3)
-        else:
+        
+        # Check if the raw file already has the required columns (i.e., a standard flat file)
+        if REQUIRED_COLUMNS.issubset(set(df_temp.columns)):
             df_raw = df_temp
+        else:
+            # If it doesn't have the columns, check if it's long enough to be an internal formatted file
+            if len(df_temp) > 3:
+                uploaded_file.seek(0) # Reset file pointer before reading again
+                df_skip = pd.read_excel(uploaded_file, skiprows=3)
+                
+                # If skipping 3 rows reveals the right columns, use it.
+                if REQUIRED_COLUMNS.issubset(set(df_skip.columns)):
+                    df_raw = df_skip
+                else:
+                    df_raw = df_temp  # Keep original headers for the user to map manually
+            else:
+                df_raw = df_temp
+                
 elif use_sample or st.session_state.get("sample_loaded"):
     st.session_state.sample_loaded = True
     if not os.path.exists("sample_results.xlsx"):
