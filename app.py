@@ -46,9 +46,9 @@ def ensure_industrial_workbook(filename="sample_results.xlsx"):
         ws["A1"].font = Font(bold=True, size=11, color="1F4E79")
         ws["A2"].font = Font(italic=True, size=9, color="7F7F7F")
 
-st.set_page_config(page_title="StudySense: Automated Power-System Study Results Reviewer", layout="wide")
+st.set_page_config(page_title="GridReview: Automated Power-System Study Results Reviewer", layout="wide")
 
-st.title("StudySense: Automated Power-System Study Results Reviewer")
+st.title("GridReview: Automated Power-System Study Results Reviewer")
 st.caption("Engineering Automation: Natural-Language Configuration + Dynamic Column Mapping + N-0/N-1 Validation")
 
 # Sidebar Configuration
